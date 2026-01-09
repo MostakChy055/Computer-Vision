@@ -288,7 +288,6 @@ Without bias, a model would require enormous amounts of data to learn simple tru
 “pixels near each other are related.”
 
 Bias gives the model a head start.
-
 ---
 
 ### The Example: Convolutional Bias
@@ -306,7 +305,7 @@ It is like giving a child Lego blocks with magnets:
 - The magnets (bias) make it easier to build structures,
 - Because the blocks naturally stick together in useful ways.
 
----
+
 
 ## 4. Why Convolution Alone Is Not Enough
 
@@ -315,7 +314,6 @@ A convolution operation is a **Linear Operator**.
 It performs a weighted sum.
 
 ---
-
 ### The Reason / Purpose
 Convolutions alone are insufficient for two reasons:
 
@@ -329,7 +327,6 @@ Convolutions alone are insufficient for two reasons:
    Without pooling or strided convolutions, the model cannot capture global context.  
    It may see fur and an eye, but not understand dog.
 
----
 
 ## 5. Why Depth Does Not Automatically Imply Abstraction
 
@@ -337,7 +334,7 @@ Convolutions alone are insufficient for two reasons:
 **Abstraction** means converting pixels into concepts  
 (edges → shapes → objects).
 
-
+---
 ### The Reasoning
 Depth alone does not guarantee abstraction.
 
@@ -348,7 +345,6 @@ Depth alone does not guarantee abstraction.
    Poorly designed depth can prevent learning in early layers, blocking edge detection needed for higher concepts.
 
 ---
-
 ### The Intuition
 Imagine 50 people in a line whispering a word.
 
@@ -357,7 +353,6 @@ Imagine 50 people in a line whispering a word.
 
 **Abstraction requires processing and compression as information moves forward.**
 
----
 
 ## 6. Overcomplete AEs: Making Copying "Expensive"
 
@@ -366,7 +361,6 @@ An **Overcomplete Autoencoder** has a hidden layer larger than the input.
 By default, this encourages copying.
 
 ---
-
 ### The Reason / Purpose
 Overcomplete AEs only work when copying is made expensive through **Regularization**.
 
@@ -379,7 +373,6 @@ Overcomplete AEs only work when copying is made expensive through **Regularizati
   Identity mapping fails because copying noise increases loss.
 
 ---
-
 ### The Intuition
 Imagine a wide bridge that fits 100 cars.
 
@@ -393,7 +386,6 @@ People consolidate into buses.
 Copying becomes too expensive, so abstraction emerges.
 
 ---
-
 ## Summary for Your Master Plan
 
 To build a novel vision model, ensure that:
@@ -413,6 +405,4 @@ To build a novel vision model, ensure that:
 - Use **Overcomplete Autoencoders (with Regularization)** when you want a powerful **feature extractor**  
   capable of learning subtle and complex patterns  
   (e.g., medical imaging, fine-grained texture analysis).
-
----
 
