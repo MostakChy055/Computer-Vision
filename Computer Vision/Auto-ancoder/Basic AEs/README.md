@@ -17,4 +17,8 @@
   - Lose precise spatial relationship
   - Prefers textures over shape
     - These result in: character losing indentity and model re-constructing letter like structures
-      
+- Even decreasing the weightage of MSE to **0.3** didn't help, rather it increased the loss!
+<img width="941" height="406" alt="image" src="https://github.com/user-attachments/assets/f0053a16-a026-40d9-8210-7b670f1f964e" />
+<img width="1215" height="734" alt="image" src="https://github.com/user-attachments/assets/ddcfaf5e-485b-4757-a996-22204257b623" />
+
+
