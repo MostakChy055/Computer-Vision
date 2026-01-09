@@ -20,5 +20,6 @@
 - Even decreasing the weightage of MSE to **0.3** didn't help, rather it increased the loss!
 <img width="941" height="406" alt="image" src="https://github.com/user-attachments/assets/f0053a16-a026-40d9-8210-7b670f1f964e" />
 <img width="1215" height="734" alt="image" src="https://github.com/user-attachments/assets/ddcfaf5e-485b-4757-a996-22204257b623" />
-
-
+- Even using instance normalization didn't help much!
+<img width="876" height="392" alt="image" src="https://github.com/user-attachments/assets/1522c444-f5d1-41da-b42a-98b540673cf3" />
+<img width="1169" height="709" alt="image" src="https://github.com/user-attachments/assets/37210d6e-4b3c-4fcf-8e34-5e49d723e4c3" />
