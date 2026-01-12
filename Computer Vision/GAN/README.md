@@ -1,4 +1,4 @@
-# Background Problem
+<img width="954" height="423" alt="image" src="https://github.com/user-attachments/assets/76ce2ca6-7bb8-45b9-98d2-f786ad56c12a" /># Background Problem
 
 First, we need to start with the fundamental problem Generative Adversarial Networks (GANs) try to solve: **comparing two probability distributions.**
 
@@ -791,3 +791,16 @@ L_{\text{gen}} = -\mathbb{E}[f(G(z))]
 - **Visual Result:**  
   Unlike JS Divergence (which can look flat), the Wasserstein distance looks like a **steady hill**.  
   No matter how far the Generator is, it can always *see* which way is uphill toward real data.
+
+<img width="889" height="406" alt="image" src="https://github.com/user-attachments/assets/45933fee-37ca-4755-9ede-c28ca9a71c4e" />
+<img width="878" height="524" alt="image" src="https://github.com/user-attachments/assets/3fa13ab3-0e0f-4861-8f92-d89667d79dc4" />
+<img width="872" height="545" alt="image" src="https://github.com/user-attachments/assets/94a99383-856f-4875-a522-d02ff93df314" />
+<img width="886" height="544" alt="image" src="https://github.com/user-attachments/assets/ea92ca75-6674-482a-a9e0-52496fe424bd" />
+<img width="881" height="499" alt="image" src="https://github.com/user-attachments/assets/f85f4e8a-9381-4263-89e4-8b7239c47ab6" />
+<img width="982" height="474" alt="image" src="https://github.com/user-attachments/assets/c6e7a84e-28d0-4aef-b14c-5c8306afbb8a" />
+<img width="954" height="423" alt="image" src="https://github.com/user-attachments/assets/e5249e3e-7d25-45c9-a69e-a4a1ef8523be" />
+<img width="930" height="322" alt="image" src="https://github.com/user-attachments/assets/f729a175-3503-4730-8eeb-eeecce34e4b8" />
+<img width="930" height="636" alt="image" src="https://github.com/user-attachments/assets/69b27e5b-782f-4d23-827b-6ba560ab0ad5" />
+
+## Conditional GAN
+To master vision models, you must understand that a standard GAN is "blindly" creative. If you ask it to generate an image from noise z, you have no idea if it will produce a dog, a cat, or a car. Conditional GANs (cGANs) are the solution to this lack of control—they turn the generator into a "controllable" artist by giving it a specific prompt.
