@@ -1,4 +1,4 @@
-<img width="954" height="423" alt="image" src="https://github.com/user-attachments/assets/76ce2ca6-7bb8-45b9-98d2-f786ad56c12a" /># Background Problem
+# Background Problem
 
 First, we need to start with the fundamental problem Generative Adversarial Networks (GANs) try to solve: **comparing two probability distributions.**
 
@@ -800,7 +800,35 @@ L_{\text{gen}} = -\mathbb{E}[f(G(z))]
 <img width="982" height="474" alt="image" src="https://github.com/user-attachments/assets/c6e7a84e-28d0-4aef-b14c-5c8306afbb8a" />
 <img width="954" height="423" alt="image" src="https://github.com/user-attachments/assets/e5249e3e-7d25-45c9-a69e-a4a1ef8523be" />
 <img width="930" height="322" alt="image" src="https://github.com/user-attachments/assets/f729a175-3503-4730-8eeb-eeecce34e4b8" />
+<img width="954" height="423" alt="image" src="https://github.com/user-attachments/assets/76ce2ca6-7bb8-45b9-98d2-f786ad56c12a" />
 <img width="930" height="636" alt="image" src="https://github.com/user-attachments/assets/69b27e5b-782f-4d23-827b-6ba560ab0ad5" />
 
 ## Conditional GAN
-To master vision models, you must understand that a standard GAN is "blindly" creative. If you ask it to generate an image from noise z, you have no idea if it will produce a dog, a cat, or a car. Conditional GANs (cGANs) are the solution to this lack of control—they turn the generator into a "controllable" artist by giving it a specific prompt.
+To master vision models, one must understand that a standard GAN is "blindly" creative. If one ask it to generate an image from noise z, you have no idea if it will produce a dog, a cat, or a car. Conditional GANs (cGANs) are the solution to this lack of control—they turn the generator into a "controllable" artist by giving it a specific prompt.
+
+<img width="1009" height="428" alt="image" src="https://github.com/user-attachments/assets/0310598a-0cf6-4f52-8049-5b495f860d90" />
+<img width="1001" height="525" alt="image" src="https://github.com/user-attachments/assets/574d2923-8d52-491c-a55e-199012d01f2c" />
+<img width="999" height="610" alt="image" src="https://github.com/user-attachments/assets/e983d610-7644-486d-a62a-b73b67c709d8" />
+<img width="999" height="610" alt="image" src="https://github.com/user-attachments/assets/da12c20a-b668-4b64-9e7a-fbacbf4afd8d" />
+<img width="978" height="226" alt="image" src="https://github.com/user-attachments/assets/91ed1680-2ab4-4cc7-9f8c-77957ac0a17c" />
+<img width="989" height="620" alt="image" src="https://github.com/user-attachments/assets/7b65b6c9-5378-4ff9-b314-c8ef67e24a1d" />
+<img width="993" height="295" alt="image" src="https://github.com/user-attachments/assets/e12297ed-5d25-4a9c-b6d3-b68b47f99f6b" />
+<img width="993" height="295" alt="image" src="https://github.com/user-attachments/assets/109f3db3-0697-4a70-951e-c55e4590e851" />
+<img width="1049" height="582" alt="image" src="https://github.com/user-attachments/assets/57ba8703-5c90-42aa-ba31-2d1fd6cc2caa" />
+<img width="966" height="686" alt="image" src="https://github.com/user-attachments/assets/443930c0-4050-4da0-9db9-660bbd858994" />
+<img width="983" height="630" alt="image" src="https://github.com/user-attachments/assets/b97f768b-522b-4400-aeb1-24b13585ce5b" />
+<img width="939" height="646" alt="image" src="https://github.com/user-attachments/assets/b6fc1355-190a-4be1-b3e6-c7e824c92791" />
+<img width="922" height="162" alt="image" src="https://github.com/user-attachments/assets/326158b6-8f70-40b2-883a-f81488e980a5" />
+<img width="950" height="556" alt="image" src="https://github.com/user-attachments/assets/235d3ae4-962a-454d-b6b2-c4ed0736b8b3" />
+<img width="1024" height="458" alt="image" src="https://github.com/user-attachments/assets/18cd2783-3d15-4d54-8e12-c8d599adbd2d" />
+<img width="991" height="355" alt="image" src="https://github.com/user-attachments/assets/19030355-4c2c-4e16-a5ab-98ced54702e0" />
+<img width="927" height="402" alt="image" src="https://github.com/user-attachments/assets/2eb8ccff-24a7-4a60-91de-645b5bdb2a33" />
+
+To master vision models, you must stop looking at the pixels and start looking at the Latent Space Z. Think of the latent space as a high-dimensional "hidden map" where every point represents a possible image. If the model is well-trained, this map isn't just a random pile of photos; it is a structured universe where similar concepts live near each other.
+
+<img width="965" height="592" alt="image" src="https://github.com/user-attachments/assets/ab218119-d602-4d48-adac-49783c7af5ff" />
+<img width="1014" height="419" alt="image" src="https://github.com/user-attachments/assets/ec90318d-10ee-41fe-a972-cbcddfe4b0ff" />
+<img width="949" height="642" alt="image" src="https://github.com/user-attachments/assets/1cda6fe0-45ee-425b-9a68-851b5461f563" />
+<img width="943" height="691" alt="image" src="https://github.com/user-attachments/assets/86963f24-4b82-4014-a8db-5d72502349fd" />
+<img width="922" height="541" alt="image" src="https://github.com/user-attachments/assets/36953ec6-e34b-41bc-a9ad-df865a9a27fd" />
+<img width="1002" height="434" alt="image" src="https://github.com/user-attachments/assets/3b864441-10aa-4afa-b2e5-7244473a833e" />
