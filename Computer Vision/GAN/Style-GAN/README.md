@@ -158,4 +158,68 @@ During training, the researchers use a technique called Style Mixing Regularizat
 ## Why do we do this?
 The purpose of this "mid-stream switch" is Regularization.If we always used the same $w$ for every layer, the network might start to assume that the "coarse" features (like the shape of a face) are always linked to "fine" features (like skin texture or hair color). By switching them during training, we force the model to learn that these features are independent.The model is essentially told: "You must be able to paint the fine details of Person B onto the head shape of Person A."
 
-<img width="870" height="407" alt="image" src="https://github.com/user-attachments/assets/59b7de0a-83db-4fec-afd1-b48c000aa429" />
+## Limitations
+### 1. **The "A" of the Topic: The Fragility of GANs**
+Before diving into specific glitches, we must understand the fundamental goal: A GAN is a zero-sum game. The Generator tries to "lie," and the Discriminator tries to "catch" the lie.
+
+- **The Problem:** If the Generator finds a "cheat code"-a way to trick the Discriminator using a mathematical loophole-it will stop trying to make realistic images and instead just spam that loophole.
+
+- **The Result:** We get "artifacts"-visual glitches that the Discriminator is blind to, but humans find distracting.
+
+---
+
+### 2. **Issue 1: The "Water Droplet" Artifacts (AdaIN Flaw)**
+If you look closely at StyleGAN1 images (especially in the background or hair), you will often see bright, blob-like spots that look like water droplets on a camera lens.
+
+**The Reasoning: Why it happens **
+This is caused by the Adaptive Instance Normalization (AdaIN) layer.
+
+1. **The Step:** AdalN normalizes the feature map (makes the mean O and standard deviation 1) and then applies a new style.
+
+2. **the Purpose of the Glitch:** The Generator wants to pass "signal strength" information from one layer to the next, but AdalN "wipes the slate clean" every time.
+
+3. **The Loophole:** The Generator creates a single, massive "spike" in the pixel values (adroplet).
+
+4. **The Math:** When AdalN calculates the standard deviation (o) of a map with a massive spike, that spike dominates the math. By making the spike larger or smaller, the Generator
+can effectively "sneak" information about the overall brightness or contrast past the normalization layer.
+
+``` text
+The droplet isn't a mistake; it's a deliberate tool the Generator built to bypass its own architecture's constraints.
+```
+
+---
+
+### 3. Issue 2: "Phase Sticking" (Texture Sticking)
+In StyleGAN1 and StyleGAN2, if you make a video of a person turning their head, you will notice something "creepy": the teeth or skin pores seem to stay "glued" to the screen while the face
+moves "underneath" them.
+
+**The Reasoning: Why it happens** This is caused by Progressive Growing and Aliasing.
+
+- **Progressive Growing:** The model learns in stages (4 x 4-> 8x 8 ... ).
+
+- **The Step:** Each stage acts as a "temporary output."
+
+- **The Problem:** Because the network is forced to produce a "perfect" 16x16 image before moving to 32x32, it anchors certain features (like the gap between teeth) to specific pixel
+coordinates.
+
+- **The Purpose of the Fix:** In StyleGAN3, they realized that standard convolutions are "coordinate-dependent." They lack Equivariance (the ability for a feature to move
+smoothly across the grid).
+
+Analogy: It's like a puppet where the eyes are painted on the background glass rather than on the puppet's face. When the puppet moves, the eyes stay still.
+
+## 4. Issue 3: The Inversion Trade-off (The "Real Me" Problem)
+
+If you want to use StyleGAN to edit a real photo of yourself, you must perform GAN Inversion-finding the exact w vector that recreates your face.
+
+**The Reasoning: why it happens**
+There is a fundamental "tug-of-war" in the latent space W:
+
+1. **Reconstruction:** Finding a w that looks exactly like you.
+
+2. **Editability:** Finding a w that is easy to manipulate (e.g., adding a smile).
+
+- **The Problem:** The "perfect" w that looks exactly like you often lives in a "weird" corner of the latent space that the model never saw during training.
+
+- **The Result:** If you try to add a "smile" to that w, the image completely falls apart because that part of the "map" was never learned.
+
+**Summary:** You can either have a vector that looks exactly like the real person (but is broken for editing) or a vector that is easy to edit (but looks only "sort of" like the person).
