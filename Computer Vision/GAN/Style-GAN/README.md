@@ -1,3 +1,6 @@
+## Architecture
+<img width="1006" height="502" alt="image" src="https://github.com/user-attachments/assets/fd9e357f-9084-416f-ba31-5b939e5a0b88" />
+
 A traditional GAN consists of two neural networks locked in a game:
 
 - 1. **The Generator:** A network that takes a random vector (a list of numbers) and tries to transform it into a realistic image.
@@ -78,3 +81,81 @@ Real images have random details that don't affect identity, such as the exact pl
 
 **Effect**: If you keep the style the same but change the noise, you get the same person, but their hair might be wind-blown differently, or their freckles might shift slightly.
 
+## The Mapping Network (z > w)
+How is this guided? How is z improved? Is it separate?
+
+---
+How is it Guided? (The "Teacher")
+
+The Mapping Network is not trained separately. It is part of the same "brain" as the generator.
+
+- **The Reasoning**: The Discriminator is the only teacher. It looks at the final image and says "Too fake!"
+
+- **The Flow**: The "error" (gradient) from the Discriminator travels backward: Discriminator -> Synthesis Network -> Mapping Network .
+
+- **The Result**: The Mapping Network "feels" the pressure. It learns that if it produces a w vector that makes the Synthesis Network draw a face with three eyes, the Discriminator
+will catch it. So, it learns to transform z into a w that represents "legal" and "logical" face features.
+
+```text
+  So, the mapping network gives real-world data distribution while ensuring dis-entanglement which is w,
+  then from that w, style is added which is essentially noise added seperately.
+```
+---
+
+In DCGAN, the noise z provides both the content (where the head is) and the style (what the eyes look like).
+
+- **StyleGAN Choice**: By starting with a Fixed Learned Constant, the network doesn't have to "invent" the basic structure of a head from scratch every time.
+
+- **The Purpose**: It allows the network to focus 100% of its energy on using the style vector w to modify that constant canvas.
+
+- **How it is learned**: The constant is initialized as random numbers, but it is a trainable parameter (just like the weights of a convolution). During backpropagation, the model
+learns the "optimal starting point" that makes it easiest to generate any face in the dataset.
+
+## Adaptive Instance Normalization (AdaIN)
+
+This is the "engine" of StyleGAN. It is the specific mechanism used to inject the style w into the image.
+
+The Architecture: At every layer of the synthesis network, the intermediate latent vector w is
+transformed by a small affine layer (labeled 'A' in diagrams) into a set of styles y = (ys, yb).
+These are then applied to the image data x using the AdalN formula:
+
+```math
+xi-μ(x;) AdaIN(xi, y) = ys,i
+```
+**The Reasoning (Step-by-Step):**
+
+1. **Normalize (xi - u/ơ)**: First, we strip the current feature map of its existing "style" (its mean and variance). This "wipes the slate clean."
+
+2. **Scale and Bias (ys, yb)**: Then, we apply the new style. ys scales the features (e.g., making certain edges sharper), and yb shifts them (e.g., changing overall brightness or color
+balance).
+
+```math
+σ(xi) + yb,i
+```
+
+3. **Why?** This allows the network to control the image at different scales. Early layers (low resolution) control "Coarse" styles like pose and face shape. Later layers (high resolution) control "Fine" styles like skin pores and hair texture.
+
+## Mixing Regularization (Style Mixing)
+To ensure the network truly treats each layer as an independent style, the researchers used a technique called Style Mixing.
+
+- **The Reasoning:** During training, they would occasionally switch the latent vector w halfway through the generation process. For example, they might use w1 for the first 4 layers and w2
+for the remaining layers.
+- **Purpose:** This prevents the network from "linking" the styles of different layers too closely. It forces the model to learn that "Pose" (early layers) is a separate concept from "Coloring" (late layers).
+
+## The "Switch": Style Mixing Explained
+During training, the researchers use a technique called Style Mixing Regularization. Instead of using just one w vector for the whole image, they use two.
+
+**Step-by-Step Execution:**
+
+1. **Generate two random vectors:** We pick two different random seeds and pass them through the Mapping Network to get w1 and w2.
+
+2. **Pick a Crossover Point:** We randomly select a layer in the Synthesis Network (e.g., layer 4 out of 18).
+
+3. **Feed w1:** For all layers before the crossover point (layers O to 3), we use w1 to control the AdalN operations.
+
+4. **Feed w2:** For all layers after the crossover point (layers 4 to 17), we stop using w1 and start using w2.
+
+## Why do we do this?
+The purpose of this "mid-stream switch" is Regularization.If we always used the same $w$ for every layer, the network might start to assume that the "coarse" features (like the shape of a face) are always linked to "fine" features (like skin texture or hair color). By switching them during training, we force the model to learn that these features are independent.The model is essentially told: "You must be able to paint the fine details of Person B onto the head shape of Person A."
+
+<img width="870" height="407" alt="image" src="https://github.com/user-attachments/assets/59b7de0a-83db-4fec-afd1-b48c000aa429" />
