@@ -169,6 +169,8 @@ Before diving into specific glitches, we must understand the fundamental goal: A
 ---
 
 ### 2. **Issue 1: The "Water Droplet" Artifacts (AdaIN Flaw)**
+<img width="932" height="231" alt="image" src="https://github.com/user-attachments/assets/5cc88131-9f0c-434a-987c-9f78a7dd791e" />
+
 If you look closely at StyleGAN1 images (especially in the background or hair), you will often see bright, blob-like spots that look like water droplets on a camera lens.
 
 **The Reasoning: Why it happens **
@@ -207,6 +209,96 @@ smoothly across the grid).
 
 Analogy: It's like a puppet where the eyes are painted on the background glass rather than on the puppet's face. When the puppet moves, the eyes stay still.
 
+```text
+We no longer use progressive growing in modern GANs (like StyleGAN2 or StyleGAN3) precisely because of phase sticking. The "perfect image" constraint is set by the training schedule, which forces the model to finish a "final" image at a low resolution before it’s allowed to see higher details.
+```
+---
+
+### Why "Phase Sticking" is a StyleGAN-Specific Disaster
+**The Basics:** Imagine you are drawing a portrait. If you are forced to finish the drawing perfectly at a tiny size (16 x 16 pixels) using a thick marker, you have to make hard choices about where
+the "center" of the mouth is. You "anchor" the mouth to specific pixels on that tiny grid.
+
+**The "Reasoning" for Phase Sticking**
+
+- **The Problem (Aliasing):** Every time a neural network performs a convolution or uses a ReLU (activation), it creates tiny "ripples" in the data. These ripples are aligned with the pixel grid.
+
+- **The Failure:** The network learns to use these ripples as a "GPS" or a coordinate system. Instead of learning that "teeth belong inside a mouth," it learns that "teeth belong at Pixel (x = 50,y = 50)."
+- **The Phenomenon:** When you interpolate (move) the face in a video, the face moves, but because the teeth are "glued" to the pixel grid (50, 50), they stay still. This is Phase Sticking (or Texture Sticking).
+
+In standard CNNs (like classifiers), we don't care about this because the output is just a label (e.g., "Dog"). But in Generative Models, where we want to create smooth animations, this "gluing" of features to the screen makes the result look like a creepy mask where the features don't move with the skin.
+
+---
+
+### How the "Perfect Image" Constraint is Set
+How is this production of perfect image constraint set? 
+
+It is not a single line of code, but a training strategy called a "Resolution Schedule."
+
+**The Flow of the Constraint:**
+
+1. **Stage 1: The 4x4 Phase.** The Generator produces a 4 x 4 image. The Discriminator is only trained to look at 4 x 4 images.
+
+- **The Reasoning:** To pass this stage, the Generator must make that 4 x 4 block look exactly like a "blurred" version of a real face.
+
+- **The Result:** It forces the model to "commit" to a global structure (where the eyes are) early on.
+
+2. **The Fade-In (The Alpha o Parameter):** When moving to 8 x 8, StyleGAN doesn't just switch. It uses a blend:
+
+```math
+Output = (1 - a) .Upsampled(4 × 4) + a ·(8 × 8 Layer)
+```
+- **The Reasoning:** a goes from 0 to 1 over thousands of iterations
+- **The Purpose:** This forces the 8 x 8 layer to "support" the 4 x 4 layer's decisions rather than starting fresh.
+
+3. **The "Maximal Frequency" Trap:** Because the model spent 100,000 steps trying to be a "perfect" 8 x 8 generator, it has filled every available pixel of that 8 x 8 grid with
+information.
+
+. **The Constraint:** This is a hard constraint because the loss function (Adversarial Loss) will penalize the Generator if that 8 x 8 image doesn't look like a real face.
+
+---
+
+### The "A" of the Topic: Digital vs. Continuous
+In the real world, a circle is a perfect, smooth curve. In a computer, a circle is a collection of square blocks (pixels).
+
+- **Sampling:** To turn a real-world shape into a digital image, we "sample" it. We look at specific coordinates and record the color.
+
+- **The Law (Nyquist-Shannon):** To perfectly capture a signal, you must sample at a rate at least twice as high as the highest frequency in the signal.
+
+- **The Failure (Aliasing):** If you don't sample fast enough, or if your network creates "sharp" details that the pixel grid can't handle, you get Aliasing. These are the "ripples" or "ghost
+patterns" that tell the network exactly where the pixel grid is.
+
+---
+
+### What are the "Ripples"? (The Mathematical Ghost)
+When researchers talk about "ripples" in StyleGAN, they are referring to high-frequency artifacts that are unintended by-products of the network's math.
+
+A. **Why Convolutions cause Ripples**
+A convolution uses a "kernel" (a small grid of numbers) that slides across the image.
+
+- **The Reasoning**: Because the kernel moves in discrete steps (1 pixel at a time), it treats the image as a grid of separate points rather than a continuous surface.
+
+- **The Purpose of the Ripple:** If the kernel is not perfectly designed to "blur" the edges of its movement, it leaves behind a tiny "residue" of its shape at every pixel. This creates a
+subtle pattern-a ripple-that is perfectly aligned with the x, y coordinates of the screen.
+
+---
+
+B. **Why ReLUs cause Ripples**
+
+<img width="923" height="656" alt="image" src="https://github.com/user-attachments/assets/067c108f-5492-4cd1-ab8d-ca4faf832492" />
+
+The ReLU activation function is defined as:
+
+```math
+y = max(0, x)
+```
+
+- **The Reasoning:** Look at the graph of a ReLU. It has a sharp corner at 0.
+
+- **The Purpose of the Ripple:** In signal processing, a "sharp corner" (a discontinuity in the gradient) represents an infinite sum of high frequencies.
+
+- **The Flow:** Every time a signal passes through a ReLU, this "sharp turn" injects high-frequency noise into the data. Since this noise is generated at a specific pixel location, it
+acts like a "landmark" that the network uses to remember its position.
+
 ## 4. Issue 3: The Inversion Trade-off (The "Real Me" Problem)
 
 If you want to use StyleGAN to edit a real photo of yourself, you must perform GAN Inversion-finding the exact w vector that recreates your face.
@@ -223,3 +315,36 @@ There is a fundamental "tug-of-war" in the latent space W:
 - **The Result:** If you try to add a "smile" to that w, the image completely falls apart because that part of the "map" was never learned.
 
 **Summary:** You can either have a vector that looks exactly like the real person (but is broken for editing) or a vector that is easy to edit (but looks only "sort of" like the person).
+
+# Style-GAN2 
+<img width="1088" height="462" alt="image" src="https://github.com/user-attachments/assets/a5c998f2-a607-43d6-955e-2261406772d5" />
+## The Refined Mapping Network
+The Mapping Network remains largely the same as in StyleGAN1, but its importance is emphasized.
+
+- **The Flow:** z € -> 8-layer MLP -> w E W.
+
+- **The Reasoning:** We use 8 layers because the transformation from a Gaussian "blob" (z) to a complex "face shape" () is highly non-linear.
+
+- **The Purpose:** It ensures that w is disentangled. Without this depth, "hair color" and "face shape" would still be tangled together.
+
+## 3. The Synthesis Network: Weight Demodulation
+This is the most significant architectural change. StyleGAN2 replaces the "Normalization-then- Style" (AdalN) approach with Weight Demodulation.
+<img width="886" height="799" alt="image" src="https://github.com/user-attachments/assets/97588ae6-45dd-4a67-b6b7-3591c362fc7c" />
+
+**Step-by-Step Logic of Weight Demodulation:**
+1. **Modulation:** We take the style vector s (derived from w) and use it to scale the weights ( W) of the convolutional layer.
+
+```math
+Wijk = Si . Wijk
+```
+
+- **Reasoning:** Instead of changing the pixels after the convolution, we change the filter itself before it even touches the image.
+
+2. **Demodulation**: We then normalize the weights so that the expected variance of the output is 1.
+
+```math
+Wiik/Ei,k(Wijk)2 + €
+```
+- **Reasoning:** This is the "secret sauce." Because we normalize the weights instead of the feature maps, the Generator can no longer create "droplet" spikes.
+
+- **The Result:** The signal strength is managed internally within the weights, providing the same "styling" effect as AdalN but without the visual artifacts.
