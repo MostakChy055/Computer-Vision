@@ -170,6 +170,8 @@ Before diving into specific glitches, we must understand the fundamental goal: A
 
 ### 2. **Issue 1: The "Water Droplet" Artifacts (AdaIN Flaw)**
 <img width="932" height="231" alt="image" src="https://github.com/user-attachments/assets/5cc88131-9f0c-434a-987c-9f78a7dd791e" />
+<img width="1128" height="586" alt="image" src="https://github.com/user-attachments/assets/816bd5c9-e761-41e2-849f-762077cdd2dd" />
+As you can see in the image, the artifacts introduced in the 64x64 is carried to the subsequent images and finally to the output.
 
 If you look closely at StyleGAN1 images (especially in the background or hair), you will often see bright, blob-like spots that look like water droplets on a camera lens.
 
