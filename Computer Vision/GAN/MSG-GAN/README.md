@@ -1,5 +1,4 @@
 # Backgorund Research
-<img width="996" height="605" alt="image" src="https://github.com/user-attachments/assets/1bd5330b-f80a-4e69-936e-a17e045b5ba8" />
 While PatchGAN was a "magnifying glass," the Multi-Scale Discriminator is like a Panel of Judges, each viewing the same image at a different distance. This architecture was designed
 specifically to solve the "Global-Local Trade-off" that broke earlier models when they tried to scale past 256 x 256 pixels.
 
