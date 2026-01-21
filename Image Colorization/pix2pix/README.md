@@ -3,7 +3,8 @@
     - [Image Colorization: Regression vs. Classification](#imagecolorization:regressionvs.classification)
     - [Color Diversity: Class Rebalancing](#colordiversity:classrebalancing)
     - [K-Means: Designing the "Artist's Palette](#K-Means:Designingthe"Artist'sPalette)
-- [Motivation](#motivation)
+    - [Diplomacy between Mean and Mode: Temperature and Annealed Mean](#DiplomacybetweenMeanandMode:TemperatureandAnnealedMean)
+- [Generator](#Generator)
 - [Problem Formulation](#problem-formulation)
 - [Methodology](#methodology)
   - [Model Architecture](#model-architecture)
@@ -83,7 +84,7 @@ greens for trees, but maybe only 1 or 2 weird neon pinks. K-Means is the process
 
 ---
 
-### Temperature and Annealed Mean: The "Magic Blend"
+### Diplomacy between Mean and Mode: Temperature and Annealed Mean
 After the model is trained, for every pixel, it outputs a list of 313 probabilities (e.g., "I'm 40% sure this is Bin #5, 30% sure it's Bin #6 ... "). We now have to turn those 313 numbers back into
 one single ab color.
 
@@ -111,7 +112,7 @@ The formula for the probability Pi of a bin i with a logit (raw score) zi is:
 
   
 
-We used our own didn't use the batch-normalization layer of the resnet because?
+### Why not use resnet's batch-normalization?
 
 BatchNorm was designed to solve "Internal Covariate Shift." As data flows through a network, the distribution of values can shift wildly, making it hard for the next layer to learn. BN stabilizes
 this by:
@@ -147,3 +148,5 @@ Imagine 313 people voting on what color a pixel should be.
 - **With Low Temperature (T = 0.38):** You give the people with the most confidence a "megaphone." The person who is most sure it's Red gets their vote multiplied. Now, instead of a muddy purple, the "Red" influence wins out, but the "Blue" voters still provide a tiny bit of influence to keep the edges from being too sharp.
 
 "Annealing" is a term from metallurgy (cooling metal). In this context, it refers to "cooling" the probability distribution to make it more rigid and certain, rather than fluid and vague.
+
+# Generator
