@@ -1,10 +1,13 @@
-## Table of Contents
+<img width="973" height="492" alt="image" src="https://github.com/user-attachments/assets/c0e6d54e-1088-4c5d-a0bd-36ff8bc1de26" />## Table of Contents
 - [Fundamentals](#fundamentals)
     - [Image Colorization: Regression vs. Classification](#imagecolorization:regressionvs.classification)
     - [Color Diversity: Class Rebalancing](#colordiversity:classrebalancing)
     - [K-Means: Designing the "Artist's Palette](#K-Means:Designingthe"Artist'sPalette)
     - [Diplomacy between Mean and Mode: Temperature and Annealed Mean](#DiplomacybetweenMeanandMode:TemperatureandAnnealedMean)
 - [Generator](#Generator)
+    - [Encoder](#encoder)
+    - [Bottleneck](#bottleneck)
+    - [Decoder](#decoder)
 - [Problem Formulation](#problem-formulation)
 - [Methodology](#methodology)
   - [Model Architecture](#model-architecture)
@@ -150,3 +153,123 @@ Imagine 313 people voting on what color a pixel should be.
 "Annealing" is a term from metallurgy (cooling metal). In this context, it refers to "cooling" the probability distribution to make it more rigid and certain, rather than fluid and vague.
 
 # Generator
+## Bottleneck
+### Global Reasoning
+
+The data reaches the Bottleneck, the deepest point where the "receptive field" is largest.
+
+SelfAttention (with reduction = 16):
+- **Reasoning:** Standard convolutions only see local neighbors. Self-attention allows the model to relate distant pixels. The reduction=16 is a critical engineering choice to
+prevent Out-of-Memory (OOM) errors by shrinking the internal keys and queries, making it computationally efficient while still capturing global context.
+
+GlobalColorContextHead (FiLM):
+- **Reasoning:** Colorization needs a "theme." Is this a sunset? A snowy day? This head looks at the whole image and produces two vectors: Gamma (y) and Beta (ß).
+
+
+## Decoder
+### Attention Gate: Precision Filter
+In a standard U-Net, we use Skip Connections to recover spatial information lost during downsampling. However, the encoder features (the "skip" data) are often extracted from early
+layers that haven't learned to distinguish between the foreground (e.g., a tumor or a specific object) and the background (clutter).
+An Attention Gate (AG) is a mechanism placed on the skip connection to suppress feature responses in irrelevant background regions.
+
+**The Intuition: The Flashlight and the Map**
+
+Imagine you are in a dark room (the decoder) trying to reconstruct a puzzle.
+
+- **The Skip Connection (x):** This is a high-resolution photograph of the room, but it's cluttered with everything-furniture, dust, shadows.
+- **The Gating Signal (g):** This comes from a deeper, lower-resolution layer. It has a very "blurry" but "intelligent" idea of where the target is. It's like a low-resolution map that says
+"The puzzle is roughly in the center."
+- **The Attention Gate:** You use the "blurry map" (g) as a flashlight to shine onto the "cluttered photo" (x). You only keep the high-resolution details that are illuminated by the flashlight. Everything else in the photo is darkened (zeroed out).
+
+The Step-by-Step Reason/Purpose
+
+1. **Linear Transformations (Wæ, Wg):** We pass both the skip features (x) and the gating signal (g) through 1 x 1 convolutions.
+    - **Reason:** x and g often have different channel dimensions. We need to project them into a shared mathematical "latent space" so they can be compared.
+2. **Additive Fusion (+):** we add the transformed signals together.
+    - **Reason:** Addition highlights regions where both the "detail" (x) and the "intelligence" (g) are present.
+3. **ReLU Activation:** Reason: It introduces non-linearity and discards negative correlations (values that don't contribute to the feature).
+4. Psi () and Sigmoid: We apply another 1 x 1 convolution to collapse the channels to 1, followed by a Sigmoid.
+    - **Reason:** This produces a coefficient (œ) between 0 and 1 for every pixel. 1 means "this pixel is important," 0 means "ignore this pixel."
+5. **Resampling:** If g is smaller than x (which it usually is), we upsample g so the "flashlight" matches the size of the "photo."
+
+## Global Context Header
+Colorization is an "ambiguous" task. If you see a grayscale image of a shirt, it could be blue, red, or green. If the model only looks at local patches, it might make the shirt half-blue and
+half-green (color bleeding).
+
+The Global Color Context Head is designed to predict a Global Color Histogram for the entire image before the decoder starts drawing. It acts as a "style guide" or a "prior" that tells
+the rest of the network: "Based on the whole scene (e.g., a forest), the overall color distribution should be mostly greens and browns."
+
+```python
+    def __init__(self, in_channels, num_bins=64):
+    super().__init__()
+    # Purpose: Collapse spatial dimensions (Height x Width) into a single 1x1 pixel.
+    # Why: We want the global "vibe" of the image, not specific pixel locations.
+    self.global_pool = nn.AdaptiveAvgPool2d(1)
+    
+    # Purpose: Transform the "vibe" into a probability distribution.
+    self.fc = nn.Sequential(
+        nn.Linear(in_channels, 512), # Expand/process features
+        nn.ReLU(),                   # Add non-linearity to learn complex relationships
+        nn.Linear(512, num_bins * 2) # Output predictions for two color channels (A and B)
+    )
+    self.num_bins = num_bins
+```
+
+```python
+    def forward(self, x):
+    # Step 1: Feature Extraction
+    # The input x is usually the "bottleneck" (the smallest, deepest part of the UNet).
+    # We pool it to get a vector representing the whole image.
+    x_pooled = self.global_pool(x).flatten(1)
+    
+    # Step 2: Prediction
+    # We pass the vector through the fully connected layers to get 'hist'.
+    # If num_bins is 64, hist has 128 values (64 for A, 64 for B).
+    hist = self.fc(x_pooled)  
+    
+    # Step 3: Normalization (The Softmax)
+    # Why: A histogram represents a probability. All bins must add up to 1.
+    # Softmax forces the network to distribute 'importance' across the color bins.
+    hist_a = F.softmax(hist[:, :self.num_bins], dim=1) # Probabilities for channel A (green-red)
+    hist_b = F.softmax(hist[:, self.num_bins:], dim=1) # Probabilities for channel B (blue-yellow)
+    
+    # Step 4: Output
+    # We glue them back together to create a single context vector.
+    return torch.cat([hist_a, hist_b], dim=1)
+```
+
+How it Benefits Colorization
+
+1. **Consistency:** It prevents the model from choosing conflicting colors. If the global head predicts a "sunny beach" histogram, the decoder is less likely to randomly color the sand blue.
+2. **Multimodal Learning:** Since it outputs a distribution (Softmax), it acknowledges that multiple colors are possible, helping the model learn the variety of colors in a scene rather than just an average "gray."
+3. **Conditioning:** This output is usually concatenated or added to the decoder layers, "reminding" the decoder at every step what the global color goals are.
+
+Now, once the Global Context Head predicts the color histogram, we need a way to "inject" that information into the rest of the UNet. We don't just want to "show" the info to the
+model; we want the global context to control how the layers behave. This where FiLM comes in.
+
+**The Purpose: Conditional Influence**
+
+Instead of just concatenating the context, FiLM uses the global information to scale and shift the feature maps of the decoder.
+
+The apply_film function typically does this:
+<img width="286" height="52" alt="image" src="https://github.com/user-attachments/assets/7ec9d47a-9245-4357-beea-303efa2b3c44" />
+1. Gamma (y): A "Scaling" factor. The global head predicts a value to multiply the feature map. Reason: To amplify important features (e.g., "increase the 'green' signal because
+we're in a forest").
+
+2. Beta (6): A "Shifting" factor. The global head predicts a value to add to the feature map. Reason: To shift the baseline activation.
+
+### TTH: The Triple Head
+At the end of the flow, the 64-channel feature map is split into three specific tasks. This is the
+objective-driven part of the model.
+
+- **ab_class head**: Colorization is non-deterministic. This head predicts a probability for 313 color bins. It handles the "is it blue or green?" uncertainty.
+- **ab_residual_head**: Discrete bins make images look "patchy." This head adds a continuous "nudge" (residual) to smooth the colors into realistic gradients. 
+- **confidence head**: This produces a map where the model "flags" areas it is unsure about. In a full system, you can use this to weigh the loss or even ask a human for input on those pixels.
+
+# ResBlock
+To master vision models, you must understand that as neural networks get deeper, they face a paradox: adding more layers should theoretically make the model smarter, but in practice, it makes it harder for the "gradient" (the signal used for learning) to flow back to the early layers. This is known as the Vanishing Gradient Problem. And this block is the solution to this.
+
+- **Prevents Gradient Decay:** Since the Generator is very deep (ResNet34 + deep decoder), the shortcut connection in every ResBlock ensures that the "instructions" from the loss function reach the very first layer of the encoder.
+- **High-Fidelity Detail:** Colorization requires keeping the sharp edges of the grayscale input. The out + residual addition ensures that the fine-grained spatial details from the input are preserved throughout the entire transformation.
+- **Stability with GroupNorm:** Because your architecture uses complex modules like Self-Attention and FiLM, the training can be volatile. The GroupNorm inside these blocks keeps the data distributions consistent, preventing the model from "crashing" or producing "NaN" (Not a Number) errors.
+- **Contextual Filtering:** The GLU at the end of the block acts as a "smart filter." It helps the model decide when to trust the "residual" (the original image) and when to trust the "convolutions" (the model's guess for color).
