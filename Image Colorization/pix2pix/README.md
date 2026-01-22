@@ -1,4 +1,4 @@
-<img width="973" height="492" alt="image" src="https://github.com/user-attachments/assets/c0e6d54e-1088-4c5d-a0bd-36ff8bc1de26" />## Table of Contents
+## Table of Contents
 - [Fundamentals](#fundamentals)
     - [Image Colorization: Regression vs. Classification](#imagecolorization:regressionvs.classification)
     - [Color Diversity: Class Rebalancing](#colordiversity:classrebalancing)
@@ -8,18 +8,10 @@
     - [Encoder](#encoder)
     - [Bottleneck](#bottleneck)
     - [Decoder](#decoder)
-- [Problem Formulation](#problem-formulation)
-- [Methodology](#methodology)
-  - [Model Architecture](#model-architecture)
-  - [Training Strategy](#training-strategy)
-  - [Loss Functions](#loss-functions)
-- [Experiments](#experiments)
-  - [Datasets](#datasets)
-  - [Evaluation Metrics](#evaluation-metrics)
-- [Results and Analysis](#results-and-analysis)
-- [Limitations](#limitations)
-- [Future Work](#future-work)
-- [References](#references)
+- [Discriminator](#discriminator)
+   - [70x70 PatchGAN Discriminator](#70x70patchgandiscriminator)
+   - [Multi-Scale Arhcitecture](#multi-scalearchitecture)
+   - [Feature Matching Strategy](#featurematchingstrategy)
 
 # Fundamentals
 ## Image Colorization: Regression vs. Classification
@@ -273,3 +265,26 @@ To master vision models, you must understand that as neural networks get deeper,
 - **High-Fidelity Detail:** Colorization requires keeping the sharp edges of the grayscale input. The out + residual addition ensures that the fine-grained spatial details from the input are preserved throughout the entire transformation.
 - **Stability with GroupNorm:** Because your architecture uses complex modules like Self-Attention and FiLM, the training can be volatile. The GroupNorm inside these blocks keeps the data distributions consistent, preventing the model from "crashing" or producing "NaN" (Not a Number) errors.
 - **Contextual Filtering:** The GLU at the end of the block acts as a "smart filter." It helps the model decide when to trust the "residual" (the original image) and when to trust the "convolutions" (the model's guess for color).
+<img width="973" height="492" alt="image" src="https://github.com/user-attachments/assets/c0e6d54e-1088-4c5d-a0bd-36ff8bc1de26" />
+
+# Discriminator
+## 70x70 PatchGAN
+A standard discriminator often ignores high-frequency details (sharp edges, textures) and focuses only on global shapes. PatchGAN forces the model to ensure that every local 70x70 region looks realistic. This is crucial for colorization to prevent "color bleeding" at edges. To deal with this unlike a standard classifier that looks at an entire image and outputs a single "Real/Fake" number, the PatchGANDiscriminator outputs a matrix of values. The final output layer is a convolution that results in a grid (e.g.,30x30). Each pixel in this grid represents a 70x70 "patch" of the original image.
+
+## Spectral Normalization (spectral_norm_conv)
+Used this to stabilize the GAN.
+- **The Logic:** Spectral Normalization constrains the Lipschitz constant of the discriminator by normalizing the weights of the convolutional filters based on their largest eigenvalue.
+- Reason/Purpose: Discriminators often become "too strong" too quickly, providing gradients that are too steep for the Generator to learn from (Exploding Gradients). Spectral Normalization keeps the Discriminator "under control," ensuring it is smooth and continuous, which makes the training process significantly more stable and prevents the Generator from "collapsing" (Mode Collapse).
+
+## Multi-Scale Architecture
+- **Reasoning:**
+- **Fine Scale ( disc1 ):** Focuses on "micro" details like the texture of skin, the grain of wood, or sharp edges.
+- **Coarse Scale ( disc3 ):** Focuses on "macro" features like global color consistency and large object shapes.
+- **Objective:** By training on three scales, the Generator receives feedback on both its tiny mistakes (local noise) and its big mistakes (wrong overall color), leading to much more cohesive images.
+
+## Feature Matching Strategy 
+In the forward pass, I have have a toggle for *return_features*
+
+- **The Logic:** Instead of just getting the final "Real/Fake" score, the model saves the intermediate outputs from layers 3, 5, and 7.
+- **Reason/Purpose:** This is for Feature Matching Loss. Instead of the Generator just trying to "fool" the judge at the finish line, we force the Generator's images to produce internalfeature maps in the Discriminator that are identical to real images.
+- **Analogy:** It's not enough for a counterfeit bill to pass a vending machine test; it has to look like a real bill under a microscope, under UV light, and to the touch. Each "feature layer" represents one of those specialized tests.
