@@ -265,7 +265,6 @@ To master vision models, you must understand that as neural networks get deeper,
 - **High-Fidelity Detail:** Colorization requires keeping the sharp edges of the grayscale input. The out + residual addition ensures that the fine-grained spatial details from the input are preserved throughout the entire transformation.
 - **Stability with GroupNorm:** Because your architecture uses complex modules like Self-Attention and FiLM, the training can be volatile. The GroupNorm inside these blocks keeps the data distributions consistent, preventing the model from "crashing" or producing "NaN" (Not a Number) errors.
 - **Contextual Filtering:** The GLU at the end of the block acts as a "smart filter." It helps the model decide when to trust the "residual" (the original image) and when to trust the "convolutions" (the model's guess for color).
-<img width="973" height="492" alt="image" src="https://github.com/user-attachments/assets/c0e6d54e-1088-4c5d-a0bd-36ff8bc1de26" />
 
 # Discriminator
 ## 70x70 PatchGAN
@@ -277,7 +276,6 @@ Used this to stabilize the GAN.
 - Reason/Purpose: Discriminators often become "too strong" too quickly, providing gradients that are too steep for the Generator to learn from (Exploding Gradients). Spectral Normalization keeps the Discriminator "under control," ensuring it is smooth and continuous, which makes the training process significantly more stable and prevents the Generator from "collapsing" (Mode Collapse).
 
 ## Multi-Scale Architecture
-- **Reasoning:**
 - **Fine Scale ( disc1 ):** Focuses on "micro" details like the texture of skin, the grain of wood, or sharp edges.
 - **Coarse Scale ( disc3 ):** Focuses on "macro" features like global color consistency and large object shapes.
 - **Objective:** By training on three scales, the Generator receives feedback on both its tiny mistakes (local noise) and its big mistakes (wrong overall color), leading to much more cohesive images.
